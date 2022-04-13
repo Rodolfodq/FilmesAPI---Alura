@@ -2,6 +2,7 @@
 using FilmesAPI.Model;
 using FilmesAPI.Services;
 using FluentResults;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Collections.Generic;
 using System.Linq;
@@ -20,6 +21,7 @@ namespace FilmesAPI.Controllers
         }
         
         [HttpPost]
+        [Authorize(Roles = "admin")]
         public async Task<IActionResult> AdicionaFilme([FromBody] CreateFilmeDto filme)
         {
             int id = await _service.AddFilme(filme);
@@ -27,6 +29,7 @@ namespace FilmesAPI.Controllers
         }
 
         [HttpGet]
+        [Authorize(Roles = "admin, regular", Policy = "IdadeMinima")]
         public async Task<IActionResult> RecuperaFilmes([FromQuery] int? classificacaoEtaria = null)
         {
             List<ReadFilmeDto> dto = await _service.RecuperaFilmes(classificacaoEtaria);

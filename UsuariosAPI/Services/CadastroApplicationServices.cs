@@ -1,7 +1,6 @@
 ﻿using AutoMapper;
 using FluentResults;
 using Microsoft.AspNetCore.Identity;
-using System;
 using System.Linq;
 using System.Threading.Tasks;
 using System.Web;
@@ -14,10 +13,10 @@ namespace UsuariosAPI.Services
     public class CadastroApplicationServices
     {
         private IMapper _mapper;
-        private UserManager<IdentityUser<int>> _userManager;
+        private UserManager<CustomIdentityUser> _userManager;
         private EmailApplicationService _emailService;
 
-        public CadastroApplicationServices(IMapper mapper, UserManager<IdentityUser<int>> userManager, EmailApplicationService emailService)
+        public CadastroApplicationServices(IMapper mapper, UserManager<CustomIdentityUser> userManager, EmailApplicationService emailService, RoleManager<IdentityRole<int>> roleManager)
         {
             _mapper = mapper;
             _userManager = userManager;
@@ -27,9 +26,11 @@ namespace UsuariosAPI.Services
         public async Task<Result> CadastroUsuarioAsync(CreateUsuarioDto usuarioDto)
         {
             Usuario usuario = _mapper.Map<Usuario>(usuarioDto);
-            IdentityUser<int> usuarioIdentity = _mapper.Map<IdentityUser<int>>(usuario);
-            Task<IdentityResult> resultadoIdentity = _userManager.CreateAsync(usuarioIdentity, usuarioDto.Password);
-            if (resultadoIdentity.Result.Succeeded)
+            CustomIdentityUser usuarioIdentity = _mapper.Map<CustomIdentityUser>(usuario);
+            var resultadoIdentity = await _userManager
+                .CreateAsync(usuarioIdentity, usuarioDto.Password);
+            await _userManager.AddToRoleAsync(usuarioIdentity, "regular");
+            if (resultadoIdentity.Succeeded)
             {
                 string code = await _userManager.GenerateEmailConfirmationTokenAsync(usuarioIdentity);
                 var encondeCode = HttpUtility.UrlEncode(code);
